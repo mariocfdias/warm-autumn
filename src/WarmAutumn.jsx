@@ -514,6 +514,97 @@ const PALETTE_CONFIG = {
     avoidHeading: "Cores que costumam destoar em Bright Spring",
     swapHeading: "Trocas inteligentes — padrões para Bright Spring",
     swapNote: "Substitua os padrões apagados, frios ou empoeirados por versões vivas e luminosas que favorecem sua coloração:",
+    MAKEUP: {
+      intro: "A maquiagem ideal deve parecer fresca, luminosa, colorida e limpa. Pele com acabamento natural, acetinado ou luminoso. Evite base muito matte, contorno cinza e pó pesado.",
+      pele: [
+        { label: "Base", value: "Natural, glow, satin, segunda pele" },
+        { label: "Corretivo", value: "Leve a médio, sem acinzentar" },
+        { label: "Pó", value: "Translúcido fino, só onde precisa" },
+        { label: "Iluminador", value: "Champagne, dourado claro, pêssego luminoso" },
+        { label: "Bronzer", value: "Dourado claro, mel, caramelo suave" },
+      ],
+      blush: [
+        { hex: "#FFB07C", name: "Pêssego vivo",   note: "Natural e fresco" },
+        { hex: "#FF7F7A", name: "Coral claro",    note: "Muito harmônico" },
+        { hex: "#FF6F61", name: "Rosa coral",     note: "Feminino e alegre" },
+        { hex: "#FF4F7B", name: "Rosa melancia",  note: "Mais impactante" },
+        { hex: "#FF9F45", name: "Tangerina suave",note: "Moderno e solar" },
+        { hex: "#F76F72", name: "Goiaba",         note: "Ótimo para pele média" },
+      ],
+      blushAvoid: "Evite blush malva, rosa queimado, vinho, marrom frio e ameixa.",
+      iluminador: [
+        { hex: "#F7E3B2", name: "Champagne claro" },
+        { hex: "#F7C948", name: "Dourado suave" },
+        { hex: "#FFD0A6", name: "Pêssego perolado" },
+        { hex: "#F6B7A8", name: "Rosé quente luminoso" },
+      ],
+      iluminadorAvoid: "Evite iluminador prateado frio, gelo ou lilás se ficar artificial.",
+      batomDia: [
+        { hex: "#FF7F7A", name: "Coral claro",            note: "Natural, bonito e seguro" },
+        { hex: "#F4A896", name: "Pêssego rosado",         note: "Nude ideal da cartela" },
+        { hex: "#F76F72", name: "Rosa goiaba",            note: "Alegre sem pesar" },
+        { hex: "#FF6F91", name: "Rosa melancia suave",    note: "Boca saudável" },
+        { hex: "#FF8C42", name: "Tangerina translúcido", note: "Moderno e fresco" },
+        { hex: "#FF6F61", name: "Gloss coral",            note: "Excelente para maquiagem leve" },
+      ],
+      batomMarcante: [
+        { hex: "#F9423A", name: "Vermelho tomate",   note: "Clássico da cartela" },
+        { hex: "#FF5349", name: "Vermelho coral",    note: "Elegante e quente" },
+        { hex: "#F4364C", name: "Vermelho melancia", note: "Vivo e feminino" },
+        { hex: "#F72585", name: "Pink quente",        note: "Impactante" },
+        { hex: "#D92B8A", name: "Fúcsia quente",      note: "Forte, mas harmônico" },
+        { hex: "#FF8C1A", name: "Laranja tangerina",  note: "Fashion e luminoso" },
+        { hex: "#E40046", name: "Cereja brilhante",   note: "Melhor se não for vinho" },
+      ],
+      batomNude: "Para Primavera Brilhante, o nude raramente é bege apagado — o melhor nude costuma ser um pêssego rosado, coral suave ou rosa quente translúcido.",
+      batomAcabamentos: {
+        bons: ["Cremoso", "Acetinado", "Glossy", "Balm pigmentado", "Lip tint coral / melancia", "Laqueado"],
+        evitar: ["Matte muito seco", "Batom muito escuro", "Nude bege acinzentado", "Marrom frio", "Malva", "Vinho fechado", "Rosa queimado"],
+      },
+      sombrasNeutras: [
+        { hex: "#F7E3B2", name: "Champagne",                 note: "Iluminar canto interno" },
+        { hex: "#F7C948", name: "Dourado claro",             note: "Pálpebra móvel" },
+        { hex: "#FFB07C", name: "Pêssego acetinado",         note: "Maquiagem diária" },
+        { hex: "#F3CDAA", name: "Bege quente luminoso",      note: "Base de sombra" },
+        { hex: "#B9803F", name: "Caramelo claro",            note: "Côncavo suave" },
+        { hex: "#C6924B", name: "Bronze claro",              note: "Noite, sem pesar" },
+        { hex: "#8A5A35", name: "Marrom chocolate ao leite", note: "Delineado suave" },
+      ],
+      sombrasColoridas: [
+        { hex: "#00B8C8", name: "Turquesa",        note: "Delineado colorido" },
+        { hex: "#4ED9C4", name: "Verde água",      note: "Ponto de luz" },
+        { hex: "#FF6F61", name: "Coral",           note: "Sombra moderna" },
+        { hex: "#FFB07C", name: "Pêssego vivo",    note: "Maquiagem leve" },
+        { hex: "#F72585", name: "Rosa quente",     note: "Monocromática feminina" },
+        { hex: "#00AEEF", name: "Azul piscina",    note: "Delineado ou detalhe" },
+        { hex: "#F7C948", name: "Dourado",         note: "Festa" },
+      ],
+      delineador: [
+        "Marrom chocolate vivo",
+        "Marrom café quente",
+        "Azul marinho vivo",
+        "Verde petróleo luminoso",
+        "Bronze",
+        "Cobre",
+        "Turquesa escuro",
+      ],
+      delineadorNote: "Máscara preta funciona, mas a marrom escura costuma ficar mais integrada em looks suaves.",
+      unhas: [
+        { hex: "#FF6F61", name: "Coral" },
+        { hex: "#FFB07C", name: "Pêssego vivo" },
+        { hex: "#F76F72", name: "Goiaba" },
+        { hex: "#FF4F7B", name: "Melancia" },
+        { hex: "#F9423A", name: "Vermelho tomate" },
+        { hex: "#FF8C1A", name: "Tangerina" },
+        { hex: "#F72585", name: "Pink quente" },
+        { hex: "#00B8C8", name: "Turquesa" },
+        { hex: "#4ED9C4", name: "Verde água" },
+        { hex: "#F7C948", name: "Dourado claro" },
+        { hex: "#EAB893", name: "Nude pêssego" },
+        { hex: "#FFF4D8", name: "Branco quente" },
+      ],
+      unhasAvoid: "Evite nude acinzentado, vinho escuro, marrom frio e lilás cinza.",
+    },
     THEME_VARS: {
       "--warm-bg": "#FFF4D8",
       "--warm-bg2": "#FFEFC4",
@@ -1024,6 +1115,115 @@ function SwapTable() {
 }
 
 // ─────────────────────────────────────────────
+// MAKEUP TAB (palette-specific; only rendered when cfg.MAKEUP exists)
+// ─────────────────────────────────────────────
+function MakeupSwatchGrid({ items, withNote = true }) {
+  return (
+    <div className="palette-grid makeup-grid">
+      {items.map((c) => (
+        <div key={c.name + c.hex} className="color-chip makeup-chip">
+          <div className="chip-swatch" style={{ background: c.hex }} />
+          <div className="chip-label">
+            <div className="makeup-name">{c.name}</div>
+            {withNote && c.note && <div className="makeup-note">{c.note}</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MakeupTab() {
+  const cfg = usePalette();
+  const m = cfg.MAKEUP;
+  if (!m) return null;
+
+  return (
+    <div>
+      <p className="makeup-intro">{m.intro}</p>
+
+      <div className="section-label">Pele</div>
+      <div className="makeup-list">
+        {m.pele.map((p) => (
+          <div key={p.label} className="makeup-row">
+            <div className="makeup-row-label">{p.label}</div>
+            <div className="makeup-row-value">{p.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="divider" />
+
+      <div className="section-label">Blush</div>
+      <MakeupSwatchGrid items={m.blush} />
+      <p className="makeup-tip">{m.blushAvoid}</p>
+
+      <div className="divider" />
+
+      <div className="section-label">Iluminador</div>
+      <MakeupSwatchGrid items={m.iluminador} withNote={false} />
+      <p className="makeup-tip">{m.iluminadorAvoid}</p>
+
+      <div className="divider" />
+
+      <div className="section-label">Batons para o dia a dia</div>
+      <MakeupSwatchGrid items={m.batomDia} />
+      <p className="makeup-tip">{m.batomNude}</p>
+
+      <div className="section-label" style={{ marginTop: "2rem" }}>Batons marcantes</div>
+      <MakeupSwatchGrid items={m.batomMarcante} />
+
+      <div className="info-box" style={{ marginTop: "1.5rem" }}>
+        <div className="info-box-title">Acabamentos de batom</div>
+        <div className="acabamentos-cols">
+          <div>
+            <div className="acabamento-h good">Melhores</div>
+            <ul className="acabamento-list">
+              {m.batomAcabamentos.bons.map((b) => <li key={b}>{b}</li>)}
+            </ul>
+          </div>
+          <div>
+            <div className="acabamento-h bad">Usar com cuidado</div>
+            <ul className="acabamento-list">
+              {m.batomAcabamentos.evitar.map((b) => <li key={b}>{b}</li>)}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      <div className="section-label">Sombras neutras</div>
+      <MakeupSwatchGrid items={m.sombrasNeutras} />
+
+      <div className="section-label" style={{ marginTop: "2rem" }}>Sombras coloridas</div>
+      <MakeupSwatchGrid items={m.sombrasColoridas} />
+
+      <div className="info-box" style={{ marginTop: "1.5rem" }}>
+        <div className="info-box-title">Delineador & Máscara</div>
+        <div className="info-tags">
+          {m.delineador.map((d) => (
+            <div key={d} className="info-tag">
+              <div className="dot" style={{ background: "var(--warm-brown)" }} />
+              {d}
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: 12, color: "var(--text-light)", marginTop: ".75rem", fontStyle: "italic" }}>
+          {m.delineadorNote}
+        </p>
+      </div>
+
+      <div className="divider" />
+
+      <div className="section-label">Unhas</div>
+      <MakeupSwatchGrid items={m.unhas} withNote={false} />
+      <p className="makeup-tip">{m.unhasAvoid}</p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // PALETTE TOGGLE
 // ─────────────────────────────────────────────
 function PaletteToggle({ paletteId, onChange }) {
@@ -1159,6 +1359,25 @@ header h1 em{font-style:italic;color:var(--header-fg-em)}
 .swap-pattern-cell{display:flex;align-items:center;gap:10px}
 .swap-canvas-wrap canvas{border-radius:5px;border:1px solid var(--warm-border2);display:block}
 .swap-bad{opacity:0.55}
+.makeup-intro{font-size:13px;color:var(--text-muted);line-height:1.55;margin-bottom:1.5rem;font-style:italic}
+.makeup-list{display:flex;flex-direction:column;gap:8px;margin-bottom:.5rem}
+.makeup-row{display:flex;gap:14px;padding:10px 14px;background:var(--warm-card);border:1px solid var(--warm-border);border-radius:var(--radius);align-items:baseline}
+.makeup-row-label{font-size:9.5px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--warm-gold);min-width:96px;flex-shrink:0}
+.makeup-row-value{font-size:13px;color:var(--text-main)}
+.makeup-grid{margin-bottom:.75rem}
+.makeup-chip{width:120px}
+.makeup-chip .chip-swatch{height:48px}
+.makeup-chip .chip-label{padding:6px 8px 8px;border-top:1px solid var(--warm-border)}
+.makeup-name{font-size:11.5px;font-weight:500;color:var(--text-main);line-height:1.25;margin-bottom:2px}
+.makeup-note{font-size:10px;color:var(--text-muted);font-style:italic;line-height:1.3}
+.makeup-tip{font-size:12px;color:var(--text-light);font-style:italic;margin:.5rem 0 1.25rem;line-height:1.45}
+.acabamentos-cols{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:.75rem}
+.acabamento-h{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem}
+.acabamento-h.good{color:var(--warm-gold)}
+.acabamento-h.bad{color:var(--text-muted)}
+.acabamento-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
+.acabamento-list li{font-size:12px;color:var(--text-main);padding:4px 10px;background:var(--warm-card);border:1px solid var(--warm-border);border-radius:50px;display:inline-block;width:fit-content}
+.acabamento-h.bad + .acabamento-list li{color:var(--text-muted);opacity:0.7}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeUp 0.3s ease forwards}
 footer{text-align:center;padding:2rem;font-size:11px;color:var(--text-light);letter-spacing:1px;border-top:1px solid var(--warm-border2)}
@@ -1176,6 +1395,11 @@ footer{text-align:center;padding:2rem;font-size:11px;color:var(--text-light);let
   .color-chip{width:76px}
   .avoid-chip{width:72px}
   .pattern-type-chip{width:90px}
+  .makeup-chip{width:108px}
+  .acabamentos-cols{grid-template-columns:1fr;gap:1rem}
+  .tab-btn{padding:11px 4px;font-size:11px;letter-spacing:1px}
+  .makeup-row{flex-direction:column;gap:4px}
+  .makeup-row-label{min-width:0}
 }
 @media(max-width:420px){
   header{padding-top:3.5rem}
@@ -1205,6 +1429,11 @@ export default function WarmAutumn() {
   }, [paletteId]);
 
   const cfg = PALETTE_CONFIG[paletteId];
+  const hasMakeup = !!cfg.MAKEUP;
+
+  useEffect(() => {
+    if (activeTab === "makeup" && !hasMakeup) setActiveTab("colors");
+  }, [activeTab, hasMakeup]);
 
   return (
     <PaletteContext.Provider value={cfg}>
@@ -1231,10 +1460,20 @@ export default function WarmAutumn() {
         >
           Padrões & Estampas
         </button>
+        {hasMakeup && (
+          <button
+            className={`tab-btn${activeTab === "makeup" ? " active" : ""}`}
+            onClick={() => setActiveTab("makeup")}
+          >
+            Maquiagem & Batom
+          </button>
+        )}
       </div>
 
       <div className="main">
-        {activeTab === "colors" ? <ColorsTab key={paletteId + "-colors"} /> : <PatternsTab key={paletteId + "-patterns"} />}
+        {activeTab === "colors" && <ColorsTab key={paletteId + "-colors"} />}
+        {activeTab === "patterns" && <PatternsTab key={paletteId + "-patterns"} />}
+        {activeTab === "makeup" && hasMakeup && <MakeupTab key={paletteId + "-makeup"} />}
       </div>
 
       <footer>{cfg.footer}</footer>
