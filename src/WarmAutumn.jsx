@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { CameraCapture } from "./CameraCapture";
 
 // ─────────────────────────────────────────────
 // PATTERN TYPES (palette-agnostic)
@@ -630,7 +631,7 @@ const PALETTE_CONFIG = {
 // ─────────────────────────────────────────────
 // CONTEXT
 // ─────────────────────────────────────────────
-const PaletteContext = createContext(null);
+export const PaletteContext = createContext(null);
 const usePalette = () => useContext(PaletteContext);
 
 // ─────────────────────────────────────────────
@@ -1405,6 +1406,317 @@ footer{text-align:center;padding:2rem;font-size:11px;color:var(--text-light);let
   header{padding-top:3.5rem}
   header h1{font-size:clamp(2.4rem,11vw,4rem)}
 }
+
+/* ── Camera feature ─────────────────────────────────────── */
+:root{
+  --cam-ok:#4a8a3d;
+  --cam-err:#9a3d3d;
+}
+.cam-section{}
+.cam-viewport{
+  position:relative;
+  width:100%;
+  max-width:480px;
+  margin:0 auto 1.25rem;
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  background:#111;
+  aspect-ratio:4/3;
+  border:1.5px solid var(--warm-border2);
+}
+.cam-video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.cam-roi{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  border:1.5px solid rgba(255,255,255,0.7);
+  border-radius:4px;
+  pointer-events:none;
+}
+.roi-corner{
+  position:absolute;
+  width:13px;
+  height:13px;
+  border-color:#fff;
+  border-style:solid;
+}
+.roi-corner.tl{top:-2px;left:-2px;border-width:2px 0 0 2px}
+.roi-corner.tr{top:-2px;right:-2px;border-width:2px 2px 0 0}
+.roi-corner.bl{bottom:-2px;left:-2px;border-width:0 0 2px 2px}
+.roi-corner.br{bottom:-2px;right:-2px;border-width:0 2px 2px 0}
+.cam-live-badge{
+  position:absolute;
+  bottom:12px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 14px;
+  background:rgba(0,0,0,0.55);
+  border-radius:50px;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,0.15);
+}
+.cam-live-dot{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.3);
+  flex-shrink:0;
+}
+.cam-live-hex{
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:1px;
+  color:#fff;
+  font-family:'DM Sans',sans-serif;
+}
+.cam-placeholder{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  color:rgba(255,255,255,0.5);
+  text-align:center;
+}
+.cam-placeholder-icon{opacity:0.4}
+.cam-placeholder p{font-size:14px;margin:0}
+.cam-placeholder-sub{font-size:12px!important;opacity:0.7}
+.cam-error{
+  background:rgba(180,40,40,0.12);
+  border:1px solid rgba(180,40,40,0.3);
+  border-radius:var(--radius);
+  padding:10px 14px;
+  font-size:13px;
+  color:var(--cam-err);
+  margin-bottom:1rem;
+}
+.cam-controls{
+  display:flex;
+  justify-content:center;
+  margin-bottom:1.25rem;
+}
+.cam-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border:none;
+  border-radius:50px;
+  font-family:'DM Sans',sans-serif;
+  font-weight:500;
+  cursor:pointer;
+  transition:background 0.2s,transform 0.1s,opacity 0.2s;
+  font-size:13px;
+  padding:10px 22px;
+}
+.cam-btn:active{transform:scale(0.97)}
+.cam-btn:disabled{opacity:0.6;cursor:not-allowed}
+.cam-btn-primary{
+  background:var(--warm-brown);
+  color:var(--btn-active-fg);
+}
+.cam-btn-primary:hover:not(:disabled){background:var(--warm-brown-light)}
+.cam-btn-secondary{
+  background:transparent;
+  border:1.5px solid var(--warm-border2);
+  color:var(--text-muted);
+}
+.cam-btn-secondary:hover{border-color:var(--warm-gold);color:var(--warm-brown)}
+.cam-btn-lg{
+  font-size:14px;
+  padding:12px 28px;
+}
+.cam-mode-row{
+  display:flex;
+  gap:10px;
+  margin-bottom:1rem;
+  flex-wrap:wrap;
+}
+.cam-mode-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 20px;
+  border-radius:50px;
+  border:1.5px solid var(--warm-border2);
+  background:var(--warm-card);
+  color:var(--text-muted);
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.cam-mode-btn:hover{border-color:var(--warm-gold);color:var(--warm-brown)}
+.cam-mode-btn.active{
+  background:var(--warm-brown);
+  border-color:var(--warm-brown);
+  color:var(--btn-active-fg);
+}
+.cam-mode-btn svg{opacity:0.7}
+.cam-mode-btn.active svg{opacity:1}
+.cam-instruction{
+  font-size:13px;
+  color:var(--text-muted);
+  font-style:italic;
+  margin-bottom:.75rem;
+  line-height:1.5;
+}
+.cam-roi-hint{
+  font-size:11px;
+  color:var(--text-light);
+  margin-bottom:1.25rem;
+}
+.cam-action-wrap{
+  display:flex;
+  justify-content:center;
+  margin-bottom:1.5rem;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cam-spinner{
+  width:14px;
+  height:14px;
+  border:2px solid rgba(255,255,255,0.35);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+  flex-shrink:0;
+}
+.cam-result{margin-bottom:1rem}
+.cam-captured-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:1.5rem;
+  padding:14px 16px;
+  background:var(--warm-card);
+  border:1.5px solid var(--warm-border);
+  border-radius:var(--radius-lg);
+}
+.cam-captured-swatch{
+  width:56px;
+  height:56px;
+  border-radius:var(--radius);
+  flex-shrink:0;
+  border:2px solid rgba(0,0,0,0.08);
+}
+.cam-captured-hex{
+  font-size:16px;
+  font-weight:500;
+  letter-spacing:1px;
+  margin-bottom:4px;
+}
+.cam-status{
+  font-size:13px;
+  font-weight:500;
+  margin-bottom:2px;
+}
+.cam-delta{
+  font-size:12px;
+  color:var(--text-light);
+}
+.cam-pattern-best{
+  padding:16px 18px;
+  background:var(--warm-card);
+  border:1.5px solid var(--warm-border);
+  border-radius:var(--radius-lg);
+  margin-bottom:1.5rem;
+}
+.cam-pattern-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.4rem;
+  font-weight:400;
+  color:var(--warm-brown-light);
+  font-style:italic;
+  margin-bottom:8px;
+}
+.cam-conf-label{
+  font-size:12px;
+  color:var(--text-muted);
+  margin-bottom:6px;
+}
+.cam-conf-bar{
+  height:6px;
+  border-radius:3px;
+  background:var(--warm-border2);
+  overflow:hidden;
+}
+.cam-conf-fill{
+  height:100%;
+  border-radius:3px;
+  background:var(--warm-gold);
+  transition:width 0.4s ease;
+}
+.cam-top3-patterns{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:.5rem;
+}
+.cam-pattern-row{
+  display:grid;
+  grid-template-columns:28px 1fr 120px 38px;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  background:var(--warm-card);
+  border:1px solid var(--warm-border);
+  border-radius:var(--radius);
+}
+.cam-pattern-rank{
+  font-size:10px;
+  color:var(--text-light);
+  font-weight:500;
+}
+.cam-pattern-label{
+  font-size:13px;
+  font-weight:500;
+  color:var(--text-main);
+}
+.cam-pattern-bar-wrap{
+  height:5px;
+  border-radius:3px;
+  background:var(--warm-border2);
+  overflow:hidden;
+}
+.cam-pattern-bar-fill{
+  height:100%;
+  border-radius:3px;
+  background:var(--warm-gold);
+  transition:width 0.4s ease;
+}
+.cam-pattern-score{
+  font-size:11px;
+  color:var(--text-muted);
+  text-align:right;
+}
+.cam-unknown-note{
+  padding:12px 16px;
+  border-radius:var(--radius);
+  background:rgba(160,100,50,0.08);
+  border:1px dashed var(--warm-border2);
+  font-size:13px;
+  color:var(--text-muted);
+  font-style:italic;
+  line-height:1.5;
+  margin-bottom:1.25rem;
+}
+@media(max-width:600px){
+  .cam-mode-row{flex-direction:column}
+  .cam-mode-btn{justify-content:center}
+  .cam-pattern-row{grid-template-columns:24px 1fr 80px 32px}
+}
 `;
 
 export default function WarmAutumn() {
@@ -1417,6 +1729,7 @@ export default function WarmAutumn() {
     }
   });
   const [activeTab, setActiveTab] = useState("colors");
+  const [prevPaletteId, setPrevPaletteId] = useState(paletteId);
 
   useEffect(() => {
     try { window.localStorage.setItem("palette", paletteId); } catch { /* ignore */ }
@@ -1434,6 +1747,12 @@ export default function WarmAutumn() {
   useEffect(() => {
     if (activeTab === "makeup" && !hasMakeup) setActiveTab("colors");
   }, [activeTab, hasMakeup]);
+
+  useEffect(() => {
+    if (paletteId !== prevPaletteId) {
+      setPrevPaletteId(paletteId);
+    }
+  }, [paletteId, prevPaletteId]);
 
   return (
     <PaletteContext.Provider value={cfg}>
@@ -1468,12 +1787,19 @@ export default function WarmAutumn() {
             Maquiagem & Batom
           </button>
         )}
+        <button
+          className={`tab-btn${activeTab === "camera" ? " active" : ""}`}
+          onClick={() => setActiveTab("camera")}
+        >
+          Câmera
+        </button>
       </div>
 
       <div className="main">
         {activeTab === "colors" && <ColorsTab key={paletteId + "-colors"} />}
         {activeTab === "patterns" && <PatternsTab key={paletteId + "-patterns"} />}
         {activeTab === "makeup" && hasMakeup && <MakeupTab key={paletteId + "-makeup"} />}
+        {activeTab === "camera" && <CameraCapture key={paletteId + "-camera"} />}
       </div>
 
       <footer>{cfg.footer}</footer>
