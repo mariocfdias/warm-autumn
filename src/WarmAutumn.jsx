@@ -1,9 +1,26 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 
 // ─────────────────────────────────────────────
-// CONSTANTS
+// PATTERN TYPES (palette-agnostic)
 // ─────────────────────────────────────────────
-const C = {
+const PATTERN_TYPES = [
+  { id: "stripes-h",   name: "Listras horizontais" },
+  { id: "stripes",     name: "Listras verticais" },
+  { id: "check",       name: "Xadrez" },
+  { id: "herringbone", name: "Espinha de peixe" },
+  { id: "houndstooth", name: "Pied-de-poule" },
+  { id: "windowpane",  name: "Windowpane" },
+  { id: "polka",       name: "Poá / Bolinhas" },
+  { id: "floral",      name: "Floral / Folhagem" },
+  { id: "camo",        name: "Camuflado" },
+  { id: "linen",       name: "Textura linho/sarja" },
+  { id: "tie-dye",     name: "Tie-dye" },
+];
+
+// ─────────────────────────────────────────────
+// WARM AUTUMN — data
+// ─────────────────────────────────────────────
+const C_AUTUMN = {
   creme:    { hex: "#f0e6cf", name: "Creme / Marfim quente" },
   areia:    { hex: "#d8c39a", name: "Areia / Bege dourado" },
   camel:    { hex: "#c19a6b", name: "Camel / Caramelo" },
@@ -26,19 +43,13 @@ const C = {
   taupe:    { hex: "#8c7d6b", name: "Taupe quente" },
 };
 
-const PALETTES = {
+const PALETTES_AUTUMN = {
   shirt: ["creme","areia","camel","oliva","musgo","mostarda","mel","terracota","ferrugem","cobre","coral","salmao","paprica","petroleo","teal"],
   pants: ["caqui","camel","areia","oliva","musgo","cafe","marrom","jeans","taupe"],
   shoe:  ["camel","marrom","cafe","areia","creme","caqui","oliva","taupe"],
 };
 
-const PIECE_LABELS = {
-  shirt: "Escolha a cor da camiseta / camisa:",
-  pants: "Escolha a cor da calça:",
-  shoe:  "Escolha a cor do sapato / tênis:",
-};
-
-const COMBOS = {
+const COMBOS_AUTUMN = {
   shirt: {
     creme:    { pants:[{k:"caqui",note:"Combinação clássica e fácil"},{k:"oliva",note:"Visual terroso; perfeito com overshirt"},{k:"marrom",note:"Elegante; substitui o preto"},{k:"jeans",note:"Jeans escuro + creme é infalível"}], shoes:[{k:"camel",note:"Tom sobre tom quente"},{k:"marrom",note:"Âncora o look"}] },
     areia:    { pants:[{k:"oliva",note:"Terrosa e natural"},{k:"cafe",note:"Contraste suave"},{k:"caqui",note:"Tom sobre tom Warm Autumn"}], shoes:[{k:"marrom",note:"Finaliza bem"},{k:"camel",note:"Flui com a areia"}] },
@@ -79,21 +90,7 @@ const COMBOS = {
   },
 };
 
-const PATTERN_TYPES = [
-  { id: "stripes-h",   name: "Listras horizontais" },
-  { id: "stripes",     name: "Listras verticais" },
-  { id: "check",       name: "Xadrez" },
-  { id: "herringbone", name: "Espinha de peixe" },
-  { id: "houndstooth", name: "Pied-de-poule" },
-  { id: "windowpane",  name: "Windowpane" },
-  { id: "polka",       name: "Poá / Bolinhas" },
-  { id: "floral",      name: "Floral / Folhagem" },
-  { id: "camo",        name: "Camuflado" },
-  { id: "linen",       name: "Textura linho/sarja" },
-  { id: "tie-dye",     name: "Tie-dye" },
-];
-
-const PATTERN_COMBOS = {
+const PATTERN_COMBOS_AUTUMN = {
   shirt: {
     "stripes-h": [
       { name:"Creme + Marrom café", colors:["#f0e6cf","#4e3629"], look:[{role:"shirt",ck:"creme"},{role:"pants",ck:"caqui"},{role:"shoe",ck:"camel"}], note:"Excelente para Warm Autumn. Substitui o clássico branco/azul." },
@@ -182,7 +179,7 @@ const PATTERN_COMBOS = {
   },
 };
 
-const SWAPS = [
+const SWAPS_AUTUMN = [
   { bad:"Azul-marinho + Branco",       badColors:["#1a2a6c","#ffffff"],                       good:"Petróleo + Creme",              goodColors:["#274d52","#f0e6cf"],                       pattern:"stripes-h" },
   { bad:"Preto + Branco",              badColors:["#111111","#f8f8f8"],                       good:"Marrom café + Creme",          goodColors:["#4e3629","#f0e6cf"],                       pattern:"houndstooth" },
   { bad:"Cinza + Preto",               badColors:["#9099a0","#111111"],                       good:"Taupe quente + Chocolate",      goodColors:["#8c7d6b","#4e3629"],                       pattern:"check" },
@@ -192,6 +189,358 @@ const SWAPS = [
   { bad:"Listras brancas puras",       badColors:["#f8f8f8","#3a4a5c"],                       good:"Listras marfim/creme",          goodColors:["#f0e6cf","#274d52"],                       pattern:"stripes-h" },
   { bad:"Camuflado urbano cinza",      badColors:["#7a7f80","#9099a0","#4a5050","#b0b5b5"],   good:"Camo oliva/cáqui/marrom",       goodColors:["#6b6033","#8f7e54","#6b4a2f","#d8c39a"],  pattern:"camo" },
 ];
+
+// ─────────────────────────────────────────────
+// BRIGHT SPRING — data
+// ─────────────────────────────────────────────
+const C_SPRING = {
+  marfim:    { hex: "#FFF4D8", name: "Marfim claro" },
+  creme:     { hex: "#FFEFC4", name: "Creme luminoso" },
+  pessego:   { hex: "#FFB07C", name: "Pêssego vivo" },
+  areia:     { hex: "#E9D3A3", name: "Areia clara quente" },
+  camel:     { hex: "#C99A5B", name: "Camel claro" },
+  caramelo:  { hex: "#B9803F", name: "Caramelo claro" },
+  chocolate: { hex: "#8A5A35", name: "Chocolate ao leite" },
+  taupe:     { hex: "#B99B7A", name: "Taupe quente" },
+  marinho:   { hex: "#123E78", name: "Marinho brilhante" },
+  coral:     { hex: "#FF6F61", name: "Coral vivo" },
+  pink:      { hex: "#F72585", name: "Pink quente" },
+  melancia:  { hex: "#FF4F7B", name: "Rosa melancia" },
+  fucsia:    { hex: "#D92B8A", name: "Fúcsia quente" },
+  tomate:    { hex: "#F9423A", name: "Vermelho tomate" },
+  tangerina: { hex: "#FF8C1A", name: "Tangerina" },
+  canario:   { hex: "#FFD447", name: "Amarelo canário" },
+  esmeralda: { hex: "#00A36C", name: "Verde esmeralda" },
+  agua:      { hex: "#4ED9C4", name: "Verde água quente" },
+  piscina:   { hex: "#00AEEF", name: "Azul piscina" },
+  violeta:   { hex: "#8F5CF7", name: "Violeta claro vivo" },
+};
+
+const PALETTES_SPRING = {
+  shirt: ["marfim","creme","pessego","coral","pink","melancia","fucsia","tomate","tangerina","canario","esmeralda","agua","piscina","violeta","marinho"],
+  pants: ["marfim","creme","areia","camel","caramelo","taupe","marinho","coral","piscina"],
+  shoe:  ["marfim","creme","camel","caramelo","chocolate","areia","pessego","marinho"],
+};
+
+const COMBOS_SPRING = {
+  shirt: {
+    marfim:    { pants:[{k:"marinho",note:"Contraste limpo e luminoso — clássico Spring"},{k:"camel",note:"Casual elegante e arejado"},{k:"coral",note:"Vibrante e feminino"},{k:"piscina",note:"Fresco para dias quentes"}], shoes:[{k:"caramelo",note:"Aquece e ancora"},{k:"camel",note:"Tom sobre tom suave"}] },
+    creme:     { pants:[{k:"marinho",note:"Alta intensidade limpa"},{k:"camel",note:"Combinação fácil e luminosa"},{k:"coral",note:"Femina e cheia de vida"}], shoes:[{k:"caramelo",note:"Sapatilha caramelo finaliza"},{k:"marfim",note:"Look arejado total"}] },
+    pessego:   { pants:[{k:"marinho",note:"Combinação favorita Spring"},{k:"areia",note:"Suave e luminosa"},{k:"creme",note:"Visual fresco e leve"}], shoes:[{k:"marfim",note:"Sapato off-white limpo"},{k:"camel",note:"Continuidade dourada"}] },
+    coral:     { pants:[{k:"marfim",note:"Coral vivo sobre branco quente — luminoso"},{k:"marinho",note:"Contraste de alta intensidade"},{k:"areia",note:"Suave para o dia a dia"},{k:"creme",note:"Visual aberto e fresco"}], shoes:[{k:"marfim",note:"Limpo e arejado"},{k:"camel",note:"Aquece sem competir"}] },
+    pink:      { pants:[{k:"marinho",note:"Forte contraste limpo"},{k:"creme",note:"Pink quente sobre creme — feminino"},{k:"areia",note:"Suaviza sem apagar"}], shoes:[{k:"marfim",note:"Off-white deixa o pink falar"},{k:"camel",note:"Aterramento quente"}] },
+    melancia:  { pants:[{k:"marfim",note:"Rosa melancia sobre branco — fresco"},{k:"marinho",note:"Vibrante e jovem"},{k:"creme",note:"Combinação delicada"}], shoes:[{k:"marfim",note:"Limpa o look"},{k:"camel",note:"Adoça o conjunto"}] },
+    fucsia:    { pants:[{k:"marinho",note:"Combinação favorita Spring — fúcsia + navy vivo"},{k:"marfim",note:"Alta saturação sobre claro"},{k:"creme",note:"Feminina e marcante"}], shoes:[{k:"marfim",note:"Não compete com o fúcsia"},{k:"caramelo",note:"Aquece o look"}] },
+    tomate:    { pants:[{k:"marfim",note:"Vermelho tomate sobre marfim — moderno"},{k:"creme",note:"Equilíbrio luminoso"},{k:"marinho",note:"Clássico Spring — alta intensidade"}], shoes:[{k:"caramelo",note:"Aterra o vermelho"},{k:"marfim",note:"Visual limpo e vibrante"}] },
+    tangerina: { pants:[{k:"marfim",note:"Cor solar sobre marfim"},{k:"areia",note:"Suave e luminosa"},{k:"marinho",note:"Contraste alta intensidade"}], shoes:[{k:"marfim",note:"Limpo e fresco"},{k:"camel",note:"Tom sobre tom solar"}] },
+    canario:   { pants:[{k:"marinho",note:"Amarelo + marinho vivo — náutico moderno"},{k:"marfim",note:"Suave e iluminado"},{k:"creme",note:"Tom sobre tom luminoso"}], shoes:[{k:"caramelo",note:"Aquece e ancora"},{k:"marfim",note:"Visual leve"}] },
+    esmeralda: { pants:[{k:"marfim",note:"Verde rico sobre claro — sofisticado"},{k:"areia",note:"Natural e fresco"},{k:"marinho",note:"Profundidade limpa"}], shoes:[{k:"camel",note:"Combina o verde"},{k:"marfim",note:"Limpa a base"}] },
+    agua:      { pants:[{k:"marfim",note:"Verde água sobre marfim — delicado"},{k:"areia",note:"Praiano e fresco"},{k:"creme",note:"Pastel luminoso"}], shoes:[{k:"marfim",note:"Limpíssimo"},{k:"camel",note:"Toque dourado"}] },
+    piscina:   { pants:[{k:"marfim",note:"Azul vivo sobre branco quente"},{k:"creme",note:"Combinação fresca de verão"},{k:"areia",note:"Suave e cheia de luz"}], shoes:[{k:"marfim",note:"Limpa e leve"},{k:"caramelo",note:"Aterra com calor"}] },
+    violeta:   { pants:[{k:"marfim",note:"Roxo claro luminoso sobre claro"},{k:"creme",note:"Feminino e moderno"}], shoes:[{k:"marfim",note:"Mantém a leveza"}] },
+    marinho:   { pants:[{k:"marfim",note:"Marinho + marfim — clássico Spring"},{k:"creme",note:"Náutico fresco"},{k:"coral",note:"Coral nas pernas equilibra a profundidade"}], shoes:[{k:"caramelo",note:"Loafer caramelo finaliza"},{k:"marfim",note:"Visual aberto e clean"}] },
+  },
+  pants: {
+    marfim:    { shirts:[{k:"coral",note:"Coral vivo brilha sobre marfim"},{k:"pink",note:"Feminina e cheia de luz"},{k:"esmeralda",note:"Sofisticado e luminoso"},{k:"tangerina",note:"Solar e moderna"}], shoes:[{k:"camel",note:"Aquece a base clara"},{k:"caramelo",note:"Ancora o branco quente"}] },
+    creme:     { shirts:[{k:"coral",note:"Luminoso e leve"},{k:"melancia",note:"Feminino e fresco"},{k:"pessego",note:"Suave e elegante"},{k:"piscina",note:"Verão arejado"}], shoes:[{k:"camel",note:"Tom sobre tom dourado"},{k:"caramelo",note:"Ancora suavemente"}] },
+    areia:     { shirts:[{k:"coral",note:"Destaque quente sobre neutro"},{k:"pessego",note:"Suave e arejada"},{k:"esmeralda",note:"Natural e luminoso"},{k:"tomate",note:"Vivo sobre claro"}], shoes:[{k:"caramelo",note:"Coeso e quente"},{k:"camel",note:"Tom sobre tom"}] },
+    camel:     { shirts:[{k:"marfim",note:"Visual limpo e elegante"},{k:"marinho",note:"Camel + marinho vivo — chique"},{k:"piscina",note:"Fresco e moderno"},{k:"coral",note:"Quente e luminoso"}], shoes:[{k:"chocolate",note:"Aprofunda o camel"},{k:"caramelo",note:"Tom sobre tom dourado"}] },
+    caramelo:  { shirts:[{k:"marfim",note:"Visual minimalista"},{k:"esmeralda",note:"Verde rico + caramelo — sofisticado"},{k:"marinho",note:"Elegante e contrastado"}], shoes:[{k:"caramelo",note:"Tom sobre tom"},{k:"chocolate",note:"Aprofunda o look"}] },
+    taupe:     { shirts:[{k:"marfim",note:"Neutro refinado"},{k:"coral",note:"Aquece com vivacidade"},{k:"esmeralda",note:"Natural e equilibrado"}], shoes:[{k:"camel",note:"Harmonioso e luminoso"},{k:"caramelo",note:"Ancora suavemente"}] },
+    marinho:   { shirts:[{k:"pessego",note:"Suave e feminino"},{k:"coral",note:"Coral + marinho vivo — clássico"},{k:"marfim",note:"Look clean e luminoso"},{k:"canario",note:"Náutico solar"}], shoes:[{k:"camel",note:"Caramelo claro finaliza"},{k:"caramelo",note:"Combinação clássica"}] },
+    coral:     { shirts:[{k:"marfim",note:"Branco quente para o coral brilhar"},{k:"creme",note:"Suave e luminoso"}], shoes:[{k:"marfim",note:"Visual fresco"},{k:"camel",note:"Aquece sem competir"}] },
+    piscina:   { shirts:[{k:"marfim",note:"Fresco e moderno"},{k:"creme",note:"Suave e arejado"}], shoes:[{k:"marfim",note:"Limpo e leve"},{k:"camel",note:"Toque quente"}] },
+  },
+  shoe: {
+    marfim:    { shirts:[{k:"coral",note:"Tom claro deixa o coral brilhar"},{k:"pessego",note:"Suave e luminoso"},{k:"melancia",note:"Feminina e fresca"},{k:"esmeralda",note:"Sofisticado e leve"}], pants:[{k:"marinho",note:"Contraste limpo"},{k:"camel",note:"Tom sobre tom quente"},{k:"marfim",note:"Visual total marfim"}] },
+    creme:     { shirts:[{k:"coral",note:"Luminoso e arejado"},{k:"pessego",note:"Feminino e sereno"}], pants:[{k:"camel",note:"Casual elegante"},{k:"areia",note:"Tom sobre tom suave"}] },
+    camel:     { shirts:[{k:"marfim",note:"Clássico Spring"},{k:"marinho",note:"Sofisticado e luminoso"},{k:"coral",note:"Quente e cheio de luz"},{k:"esmeralda",note:"Rico sobre dourado"}], pants:[{k:"marfim",note:"Branco quente + camel — chique"},{k:"areia",note:"Tom sobre tom"},{k:"marinho",note:"Elegante e clássico"}] },
+    caramelo:  { shirts:[{k:"marfim",note:"Visual limpo e ancorado"},{k:"esmeralda",note:"Verde + caramelo — chique"},{k:"marinho",note:"Contraste rico"},{k:"tomate",note:"Vibrante com âncora quente"}], pants:[{k:"marinho",note:"Combinação clássica feminina"},{k:"camel",note:"Tom sobre tom dourado"},{k:"marfim",note:"Limpo e elegante"}] },
+    chocolate: { shirts:[{k:"marfim",note:"Contraste suave e refinado"},{k:"esmeralda",note:"Profundo e sofisticado"}], pants:[{k:"camel",note:"Coeso e elegante"},{k:"marinho",note:"Sóbrio e moderno"}] },
+    areia:     { shirts:[{k:"coral",note:"Suave + vivo — perfeito"},{k:"pessego",note:"Tons claros do verão"},{k:"marfim",note:"Total clean"}], pants:[{k:"marfim",note:"Branco quente + areia"},{k:"areia",note:"Tom sobre tom"}] },
+    pessego:   { shirts:[{k:"marfim",note:"Suave e luminoso"},{k:"creme",note:"Visual aberto e delicado"}], pants:[{k:"marinho",note:"Sapatilha pêssego + marinho — feminino"},{k:"marfim",note:"Total light"}] },
+    marinho:   { shirts:[{k:"marfim",note:"Sapato marinho ancora o branco"},{k:"pessego",note:"Suave e contrastado"},{k:"coral",note:"Coral + marinho — clássico"}], pants:[{k:"marfim",note:"Look limpo e elegante"},{k:"creme",note:"Náutico luminoso"}] },
+  },
+};
+
+const PATTERN_COMBOS_SPRING = {
+  shirt: {
+    "stripes-h": [
+      { name:"Marfim + Marinho", colors:["#FFF4D8","#123E78"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"caramelo"}], note:"Clássico náutico Spring — luminoso e atemporal." },
+      { name:"Marfim + Coral", colors:["#FFF4D8","#FF6F61"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"camel"}], note:"Listras femininas e cheias de luz." },
+      { name:"Creme + Piscina", colors:["#FFEFC4","#00AEEF"], look:[{role:"shirt",ck:"creme"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Listras vibrantes de verão." },
+      { name:"Marfim + Pink quente", colors:["#FFF4D8","#F72585"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"marfim"}], note:"Feminino e energético." },
+    ],
+    "stripes": [
+      { name:"Marfim + Marinho vertical", colors:["#FFF4D8","#123E78"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Listras verticais elegantes e arejadas." },
+      { name:"Marfim + Camel", colors:["#FFF4D8","#C99A5B"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"caramelo"}], note:"Tom sobre tom dourado." },
+      { name:"Creme + Coral", colors:["#FFEFC4","#FF6F61"], look:[{role:"shirt",ck:"creme"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Verão luminoso." },
+    ],
+    "check": [
+      { name:"Coral + Marfim + Marinho", colors:["#FF6F61","#FFF4D8","#123E78"], look:[{role:"shirt",ck:"coral"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Xadrez vibrante e luminoso — muito Spring." },
+      { name:"Marinho + Marfim + Camel", colors:["#123E78","#FFF4D8","#C99A5B"], look:[{role:"shirt",ck:"marinho"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Elegante e fresco para o trabalho." },
+      { name:"Pink + Marfim + Marinho", colors:["#F72585","#FFF4D8","#123E78"], look:[{role:"shirt",ck:"pink"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"marfim"}], note:"Alta saturação feminina." },
+      { name:"Tangerina + Marfim + Caramelo", colors:["#FF8C1A","#FFF4D8","#B9803F"], look:[{role:"shirt",ck:"tangerina"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Solar e moderno." },
+    ],
+    "herringbone": [
+      { name:"Caramelo herringbone", colors:["#B9803F","#8A5A35"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Textura rica e elegante." },
+      { name:"Marinho herringbone", colors:["#123E78","#003B71"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"caramelo"}], note:"Sofisticado e luminoso." },
+      { name:"Camel herringbone", colors:["#C99A5B","#B9803F"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Neutro quente, muito feminino." },
+    ],
+    "houndstooth": [
+      { name:"Marinho + Marfim", colors:["#123E78","#FFF4D8"], look:[{role:"shirt",ck:"marinho"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Substitui preto/branco — clássico Spring." },
+      { name:"Caramelo + Marfim", colors:["#B9803F","#FFF4D8"], look:[{role:"shirt",ck:"caramelo"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Tom sobre tom luminoso." },
+    ],
+    "windowpane": [
+      { name:"Marfim + Linhas coral", colors:["#FFF4D8","#FF6F61"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"caramelo"}], note:"Delicado e cheio de vida." },
+      { name:"Camel + Linhas marinho", colors:["#C99A5B","#123E78"], look:[{role:"shirt",ck:"camel"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Elegante para o dia a dia." },
+    ],
+    "polka": [
+      { name:"Marinho + Poá marfim", colors:["#123E78","#FFF4D8"], look:[{role:"shirt",ck:"marinho"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Clássico feminino — Spring com sofisticação." },
+      { name:"Coral + Poá marfim", colors:["#FF6F61","#FFF4D8"], look:[{role:"shirt",ck:"coral"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Charmoso e luminoso." },
+      { name:"Marfim + Poá pink", colors:["#FFF4D8","#F72585"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"marfim"}], note:"Doce e vibrante." },
+    ],
+    "floral": [
+      { name:"Marfim + Floral coral/esmeralda", colors:["#FFF4D8","#FF6F61","#00A36C"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Floral fresco — clássico Spring." },
+      { name:"Marinho + Floral coral/canário", colors:["#123E78","#FF6F61","#FFD447"], look:[{role:"shirt",ck:"marinho"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Floral vibrante sobre fundo escuro limpo." },
+      { name:"Piscina + Flores pink/canário", colors:["#00AEEF","#F72585","#FFD447"], look:[{role:"shirt",ck:"piscina"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Tropical alegre e luminoso." },
+    ],
+    "linen": [
+      { name:"Textura marfim/creme", colors:["#FFF4D8","#FFEFC4"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Linho luminoso — verão Spring." },
+      { name:"Textura pêssego", colors:["#FFB07C","#F3CDAA"], look:[{role:"shirt",ck:"pessego"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"marfim"}], note:"Suave e quente." },
+    ],
+    "tie-dye": [
+      { name:"Coral + Pêssego + Marfim", colors:["#FF6F61","#FFB07C","#FFF4D8"], look:[{role:"shirt",ck:"coral"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Tie-dye luminoso e quente — Spring puro." },
+      { name:"Piscina + Água + Marfim", colors:["#00AEEF","#4ED9C4","#FFF4D8"], look:[{role:"shirt",ck:"piscina"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Fresco e oceânico." },
+    ],
+  },
+  pants: {
+    "stripes": [
+      { name:"Marinho + Marfim", colors:["#123E78","#FFF4D8"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"caramelo"}], note:"Listras náuticas vivas." },
+      { name:"Camel + Marfim", colors:["#C99A5B","#FFF4D8"], look:[{role:"shirt",ck:"coral"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Listras suaves e luminosas." },
+    ],
+    "check": [
+      { name:"Xadrez marfim/camel/coral", colors:["#FFF4D8","#C99A5B","#FF6F61"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Vibrante e feminino." },
+      { name:"Xadrez marinho/marfim", colors:["#123E78","#FFF4D8"], look:[{role:"shirt",ck:"coral"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"marfim"}], note:"Clássico Spring." },
+    ],
+    "herringbone": [
+      { name:"Herringbone camel/caramelo", colors:["#C99A5B","#B9803F"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Textura quente e sofisticada." },
+      { name:"Herringbone marinho/marfim", colors:["#123E78","#FFF4D8"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"caramelo"}], note:"Elegante e luminoso." },
+    ],
+    "houndstooth": [
+      { name:"Pied-de-poule marfim/marinho", colors:["#FFF4D8","#123E78"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"marinho"},{role:"shoe",ck:"caramelo"}], note:"Clássico repaginado para Spring." },
+      { name:"Caramelo/marfim micro", colors:["#B9803F","#FFF4D8"], look:[{role:"shirt",ck:"esmeralda"},{role:"pants",ck:"caramelo"},{role:"shoe",ck:"caramelo"}], note:"Micro padrão luminoso." },
+    ],
+    "windowpane": [
+      { name:"Camel + Linhas coral", colors:["#C99A5B","#FF6F61"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Windowpane feminino e quente." },
+      { name:"Marfim + Linhas marinho", colors:["#FFF4D8","#123E78"], look:[{role:"shirt",ck:"coral"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"caramelo"}], note:"Sutil e moderno." },
+    ],
+    "linen": [
+      { name:"Linho marfim/areia", colors:["#FFF4D8","#E9D3A3"], look:[{role:"shirt",ck:"coral"},{role:"pants",ck:"marfim"},{role:"shoe",ck:"marfim"}], note:"Textura natural — verão Spring." },
+      { name:"Sarja camel/caramelo", colors:["#C99A5B","#B9803F"], look:[{role:"shirt",ck:"marfim"},{role:"pants",ck:"camel"},{role:"shoe",ck:"caramelo"}], note:"Textura quente e luminosa." },
+    ],
+  },
+};
+
+const SWAPS_SPRING = [
+  { bad:"Preto + Branco frio",          badColors:["#111111","#f8f8f8"],                       good:"Marinho vivo + Marfim",           goodColors:["#123E78","#FFF4D8"],                       pattern:"houndstooth" },
+  { bad:"Cinza + Preto",                badColors:["#9099a0","#111111"],                       good:"Marfim + Marinho brilhante",      goodColors:["#FFF4D8","#123E78"],                       pattern:"check" },
+  { bad:"Vinho fechado + Bordô",        badColors:["#5a1a25","#3d1116"],                       good:"Vermelho tomate + Coral",         goodColors:["#F9423A","#FF6F61"],                       pattern:"check" },
+  { bad:"Mostarda suja + Marrom",       badColors:["#7a6520","#3b2a18"],                       good:"Tangerina viva + Caramelo",       goodColors:["#FF8C1A","#B9803F"],                       pattern:"stripes-h" },
+  { bad:"Verde oliva militar",          badColors:["#4a4a2c","#3a3a22"],                       good:"Verde esmeralda + Marfim",        goodColors:["#00A36C","#FFF4D8"],                       pattern:"floral" },
+  { bad:"Bege apagado + Cinza frio",    badColors:["#c2bba8","#9099a0"],                       good:"Pêssego vivo + Marfim",           goodColors:["#FFB07C","#FFF4D8"],                       pattern:"stripes" },
+  { bad:"Lilás cinza acinzentado",      badColors:["#b098d8","#867aa0"],                       good:"Violeta claro vivo + Marfim",     goodColors:["#8F5CF7","#FFF4D8"],                       pattern:"polka" },
+  { bad:"Rosa antigo / malva",          badColors:["#b07a85","#9d6c75"],                       good:"Rosa melancia + Pink quente",     goodColors:["#FF4F7B","#F72585"],                       pattern:"polka" },
+];
+
+// ─────────────────────────────────────────────
+// ICON COMPONENTS
+// ─────────────────────────────────────────────
+const IconShirt = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z" />
+  </svg>
+);
+const IconPants = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M6 2h12l1 8-4 12H9L5 10Z" /><path d="M9 14h6" />
+  </svg>
+);
+const IconShoe = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M2 18h20v2H2z" /><path d="M4 18V9l6-5 4 3 4-2v13" /><path d="M10 13l4-2" />
+  </svg>
+);
+const IconBlouse = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round">
+    <path d="M8 3 L12 8 L16 3 L20 6 L18.5 11 L17 10.5 V21 H7 V10.5 L5.5 11 L4 6 Z" />
+    <path d="M12 8 V14" />
+  </svg>
+);
+const IconSkirt = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round">
+    <path d="M7 4 H17 L17.5 7 H6.5 Z" />
+    <path d="M6.5 7 L3 21 H21 L17.5 7 Z" />
+    <path d="M10 11 L9 21" />
+    <path d="M14 11 L15 21" />
+  </svg>
+);
+const IconHeel = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round">
+    <path d="M3 17 H18 L20 15 V12 L15 13 L10 8 H6 L4 13 Z" />
+    <path d="M18 17 L19 21 H17 L17 17" />
+    <path d="M3 19 H20" />
+  </svg>
+);
+const IconClock = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+    <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
+  </svg>
+);
+
+// ─────────────────────────────────────────────
+// PALETTE CONFIG REGISTRY
+// ─────────────────────────────────────────────
+const PALETTE_CONFIG = {
+  "warm-autumn": {
+    id: "warm-autumn",
+    title: { prefix: "Warm", emph: "Autumn" },
+    eyebrow: "Coloração Pessoal · Guia de Estilo",
+    subtitle: "Paleta interativa para montagem de looks",
+    footer: "Warm Autumn · Guia de Coloração Pessoal · Paleta baseada em Pantone TCX",
+    toggleLabel: "Outono Quente",
+    toggleShort: "Outono",
+    accentDot: "#c08a4a",
+    C: C_AUTUMN,
+    PALETTES: PALETTES_AUTUMN,
+    COMBOS: COMBOS_AUTUMN,
+    PATTERN_COMBOS: PATTERN_COMBOS_AUTUMN,
+    SWAPS: SWAPS_AUTUMN,
+    PIECE_LABELS: {
+      shirt: "Escolha a cor da camiseta / camisa:",
+      pants: "Escolha a cor da calça:",
+      shoe:  "Escolha a cor do sapato / tênis:",
+    },
+    PIECE_TABS: {
+      shirt: "Camisa / Camiseta",
+      pants: "Calça",
+      shoe:  "Sapato / Tênis",
+    },
+    PIECE_ICONS: { shirt: IconShirt, pants: IconPants, shoe: IconShoe },
+    AVOID: [
+      { hex: "#f8f8f8", label: "Branco óptico" },
+      { hex: "#111111", label: "Preto puro" },
+      { hex: "#9099a0", label: "Cinza frio" },
+      { hex: "#2040b8", label: "Azul royal" },
+      { hex: "#e03090", label: "Rosa pink" },
+      { hex: "#b098d8", label: "Lilás frio" },
+      { hex: "#5040a0", label: "Roxo azulado" },
+      { hex: "#20e8c0", label: "Neon / gélido" },
+    ],
+    METALS: [
+      { grad: "linear-gradient(135deg,#d4af37,#b8902c)", label: "Dourado" },
+      { grad: "linear-gradient(135deg,#b87333,#9a5b34)", label: "Cobre" },
+      { grad: "linear-gradient(135deg,#a97142,#84592e)", label: "Bronze" },
+      { grad: "linear-gradient(135deg,#b5a05f,#8c7836)", label: "Ouro envelhecido" },
+      { grad: "linear-gradient(135deg,#d8c9a3,#bdaa82)", label: "Champanhe" },
+    ],
+    metalsNote: "Prata muito fria pesa menos bem; prata envelhecida ou champanhe pode funcionar dependendo do conjunto.",
+    avoidHeading: "Cores que costumam destoar em Warm Autumn",
+    swapHeading: "Trocas inteligentes — padrões para Warm Autumn",
+    swapNote: "Substitua os padrões frios clássicos por versões quentes que favorecem sua coloração:",
+    THEME_VARS: {
+      "--warm-bg": "#f7f2ea",
+      "--warm-bg2": "#efe8d8",
+      "--warm-card": "#faf7f2",
+      "--warm-brown": "#5c3d23",
+      "--warm-brown-light": "#8a6040",
+      "--warm-gold": "#c08a4a",
+      "--warm-border": "rgba(120,90,50,0.15)",
+      "--warm-border2": "rgba(120,90,50,0.28)",
+      "--text-main": "#3a2710",
+      "--text-muted": "#7a6450",
+      "--text-light": "#b09a7c",
+      "--header-fg": "#f5e8d0",
+      "--header-fg-soft": "rgba(240,220,180,0.7)",
+      "--header-fg-em": "#e8c48a",
+      "--header-overlay": "radial-gradient(ellipse at 20% 50%,rgba(192,138,74,0.18) 0%,transparent 60%),radial-gradient(ellipse at 80% 30%,rgba(193,110,84,0.15) 0%,transparent 50%)",
+      "--btn-active-fg": "#f5e8d0",
+      "--avoid-stroke": "rgba(160,30,30,0.75)",
+    },
+  },
+  "bright-spring": {
+    id: "bright-spring",
+    title: { prefix: "Bright", emph: "Spring" },
+    eyebrow: "Coloração Pessoal · Guia de Estilo Feminino",
+    subtitle: "Paleta interativa para montagem de looks vibrantes",
+    footer: "Bright Spring · Guia de Coloração Pessoal · Paleta baseada em Pantone TCX",
+    toggleLabel: "Primavera Brilhante",
+    toggleShort: "Primavera",
+    accentDot: "#F72585",
+    C: C_SPRING,
+    PALETTES: PALETTES_SPRING,
+    COMBOS: COMBOS_SPRING,
+    PATTERN_COMBOS: PATTERN_COMBOS_SPRING,
+    SWAPS: SWAPS_SPRING,
+    PIECE_LABELS: {
+      shirt: "Escolha a cor da blusa:",
+      pants: "Escolha a cor da saia ou calça:",
+      shoe:  "Escolha a cor do sapato:",
+    },
+    PIECE_TABS: {
+      shirt: "Blusa / Camisa",
+      pants: "Saia / Calça",
+      shoe:  "Sapato",
+    },
+    PIECE_ICONS: { shirt: IconBlouse, pants: IconSkirt, shoe: IconHeel },
+    AVOID: [
+      { hex: "#7a6520", label: "Mostarda suja" },
+      { hex: "#5a1a25", label: "Vinho fechado" },
+      { hex: "#4a4a2c", label: "Oliva militar" },
+      { hex: "#c2bba8", label: "Bege acinzentado" },
+      { hex: "#9099a0", label: "Cinza frio" },
+      { hex: "#b098d8", label: "Lavanda fria" },
+      { hex: "#b07a85", label: "Rosa antigo / malva" },
+      { hex: "#3b2a18", label: "Marrom frio" },
+    ],
+    METALS: [
+      { grad: "linear-gradient(135deg,#F7C948,#e0b432)", label: "Dourado claro" },
+      { grad: "linear-gradient(135deg,#F7E3B2,#e6cf95)", label: "Champagne" },
+      { grad: "linear-gradient(135deg,#F6B7A8,#e89a8a)", label: "Rose gold" },
+      { grad: "linear-gradient(135deg,#d68a55,#b87333)", label: "Cobre claro" },
+      { grad: "linear-gradient(135deg,#c69152,#a97142)", label: "Bronze luminoso" },
+    ],
+    metalsNote: "Prata muito fria e escovada tende a harmonizar menos; brilho dourado/champagne realça a luminosidade da Primavera Brilhante.",
+    avoidHeading: "Cores que costumam destoar em Bright Spring",
+    swapHeading: "Trocas inteligentes — padrões para Bright Spring",
+    swapNote: "Substitua os padrões apagados, frios ou empoeirados por versões vivas e luminosas que favorecem sua coloração:",
+    THEME_VARS: {
+      "--warm-bg": "#FFF4D8",
+      "--warm-bg2": "#FFEFC4",
+      "--warm-card": "#FFFBEE",
+      "--warm-brown": "#123E78",
+      "--warm-brown-light": "#246BFE",
+      "--warm-gold": "#F7C948",
+      "--warm-border": "rgba(18,62,120,0.15)",
+      "--warm-border2": "rgba(18,62,120,0.28)",
+      "--text-main": "#0F2A4F",
+      "--text-muted": "#4A5E7A",
+      "--text-light": "#8AA0BD",
+      "--header-fg": "#FFF4D8",
+      "--header-fg-soft": "rgba(255,244,216,0.78)",
+      "--header-fg-em": "#FFD447",
+      "--header-overlay": "radial-gradient(ellipse at 20% 50%,rgba(255,111,97,0.22) 0%,transparent 60%),radial-gradient(ellipse at 80% 30%,rgba(247,37,133,0.18) 0%,transparent 55%)",
+      "--btn-active-fg": "#FFF4D8",
+      "--avoid-stroke": "rgba(200,30,80,0.75)",
+    },
+  },
+};
+
+// ─────────────────────────────────────────────
+// CONTEXT
+// ─────────────────────────────────────────────
+const PaletteContext = createContext(null);
+const usePalette = () => useContext(PaletteContext);
 
 // ─────────────────────────────────────────────
 // PATTERN DRAWING UTILITY
@@ -315,33 +664,11 @@ function PatternCanvas({ type, colors, width, height, scale = 1, style = {}, cla
 }
 
 // ─────────────────────────────────────────────
-// ICON COMPONENTS
-// ─────────────────────────────────────────────
-const IconShirt = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z" />
-  </svg>
-);
-const IconPants = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M6 2h12l1 8-4 12H9L5 10Z" /><path d="M9 14h6" />
-  </svg>
-);
-const IconShoe = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M2 18h20v2H2z" /><path d="M4 18V9l6-5 4 3 4-2v13" /><path d="M10 13l4-2" />
-  </svg>
-);
-const IconClock = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ flexShrink: 0 }}>
-    <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
-  </svg>
-);
-
-// ─────────────────────────────────────────────
 // COLORS TAB
 // ─────────────────────────────────────────────
 function ColorsTab() {
+  const cfg = usePalette();
+  const { C, PALETTES, PIECE_LABELS, PIECE_TABS, PIECE_ICONS, AVOID, METALS, metalsNote, avoidHeading } = cfg;
   const [piece, setPiece] = useState("shirt");
   const [selected, setSelected] = useState(null);
 
@@ -352,19 +679,18 @@ function ColorsTab() {
       {/* Piece selector */}
       <div className="section-label">Selecione a peça</div>
       <div className="piece-selector">
-        {[
-          { id: "shirt", label: "Camisa / Camiseta", Icon: IconShirt },
-          { id: "pants", label: "Calça", Icon: IconPants },
-          { id: "shoe",  label: "Sapato / Tênis", Icon: IconShoe },
-        ].map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            className={`piece-btn${piece === id ? " active" : ""}`}
-            onClick={() => handleSetPiece(id)}
-          >
-            <Icon /> {label}
-          </button>
-        ))}
+        {["shirt","pants","shoe"].map((id) => {
+          const Icon = PIECE_ICONS[id];
+          return (
+            <button
+              key={id}
+              className={`piece-btn${piece === id ? " active" : ""}`}
+              onClick={() => handleSetPiece(id)}
+            >
+              <Icon /> {PIECE_TABS[id]}
+            </button>
+          );
+        })}
       </div>
 
       {/* Palette */}
@@ -393,18 +719,9 @@ function ColorsTab() {
 
       {/* Avoid */}
       <div>
-        <div className="section-label">Cores que costumam destoar em Warm Autumn</div>
+        <div className="section-label">{avoidHeading}</div>
         <div className="avoid-grid">
-          {[
-            { hex: "#f8f8f8", label: "Branco óptico" },
-            { hex: "#111111", label: "Preto puro" },
-            { hex: "#9099a0", label: "Cinza frio" },
-            { hex: "#2040b8", label: "Azul royal" },
-            { hex: "#e03090", label: "Rosa pink" },
-            { hex: "#b098d8", label: "Lilás frio" },
-            { hex: "#5040a0", label: "Roxo azulado" },
-            { hex: "#20e8c0", label: "Neon / gélido" },
-          ].map(({ hex, label }) => (
+          {AVOID.map(({ hex, label }) => (
             <div key={label} className="avoid-chip">
               <div className="avoid-swatch" style={{ background: hex }} />
               <div className="avoid-label">{label}</div>
@@ -417,13 +734,7 @@ function ColorsTab() {
       <div className="info-box" style={{ marginTop: "2rem" }}>
         <div className="info-box-title">Metais que favorecem</div>
         <div className="info-tags">
-          {[
-            { grad: "linear-gradient(135deg,#d4af37,#b8902c)", label: "Dourado" },
-            { grad: "linear-gradient(135deg,#b87333,#9a5b34)", label: "Cobre" },
-            { grad: "linear-gradient(135deg,#a97142,#84592e)", label: "Bronze" },
-            { grad: "linear-gradient(135deg,#b5a05f,#8c7836)", label: "Ouro envelhecido" },
-            { grad: "linear-gradient(135deg,#d8c9a3,#bdaa82)", label: "Champanhe" },
-          ].map(({ grad, label }) => (
+          {METALS.map(({ grad, label }) => (
             <div key={label} className="info-tag">
               <div className="dot" style={{ background: grad }} />
               {label}
@@ -431,7 +742,7 @@ function ColorsTab() {
           ))}
         </div>
         <p style={{ fontSize: 12, color: "var(--text-light)", marginTop: ".75rem", fontStyle: "italic" }}>
-          Prata muito fria pesa menos bem; prata envelhecida ou champanhe pode funcionar dependendo do conjunto.
+          {metalsNote}
         </p>
       </div>
     </div>
@@ -439,6 +750,9 @@ function ColorsTab() {
 }
 
 function ResultSection({ piece, selected }) {
+  const cfg = usePalette();
+  const { C, COMBOS, PIECE_TABS } = cfg;
+
   if (!selected) {
     return (
       <div className="result-empty">
@@ -465,11 +779,11 @@ function ResultSection({ piece, selected }) {
 
   const fullLookPieces =
     piece === "shirt" && combos.pants?.length && combos.shoes?.length
-      ? [{ role: "Camisa", hex: c.hex, name: c.name }, { role: "Calça", hex: C[combos.pants[0].k].hex, name: C[combos.pants[0].k].name }, { role: "Sapato", hex: C[combos.shoes[0].k].hex, name: C[combos.shoes[0].k].name }]
+      ? [{ role: PIECE_TABS.shirt, hex: c.hex, name: c.name }, { role: PIECE_TABS.pants, hex: C[combos.pants[0].k].hex, name: C[combos.pants[0].k].name }, { role: PIECE_TABS.shoe, hex: C[combos.shoes[0].k].hex, name: C[combos.shoes[0].k].name }]
       : piece === "pants" && combos.shirts?.length && combos.shoes?.length
-      ? [{ role: "Camisa", hex: C[combos.shirts[0].k].hex, name: C[combos.shirts[0].k].name }, { role: "Calça", hex: c.hex, name: c.name }, { role: "Sapato", hex: C[combos.shoes[0].k].hex, name: C[combos.shoes[0].k].name }]
+      ? [{ role: PIECE_TABS.shirt, hex: C[combos.shirts[0].k].hex, name: C[combos.shirts[0].k].name }, { role: PIECE_TABS.pants, hex: c.hex, name: c.name }, { role: PIECE_TABS.shoe, hex: C[combos.shoes[0].k].hex, name: C[combos.shoes[0].k].name }]
       : piece === "shoe" && combos.shirts?.length && combos.pants?.length
-      ? [{ role: "Camisa", hex: C[combos.shirts[0].k].hex, name: C[combos.shirts[0].k].name }, { role: "Calça", hex: C[combos.pants[0].k].hex, name: C[combos.pants[0].k].name }, { role: "Sapato", hex: c.hex, name: c.name }]
+      ? [{ role: PIECE_TABS.shirt, hex: C[combos.shirts[0].k].hex, name: C[combos.shirts[0].k].name }, { role: PIECE_TABS.pants, hex: C[combos.pants[0].k].hex, name: C[combos.pants[0].k].name }, { role: PIECE_TABS.shoe, hex: c.hex, name: c.name }]
       : null;
 
   return (
@@ -483,20 +797,20 @@ function ResultSection({ piece, selected }) {
 
       {piece === "shirt" && (
         <>
-          {combos.pants?.length > 0 && <><div className="result-sub-label">Calças que combinam</div><div className="suggestions-grid">{rows(combos.pants, "Calça")}</div></>}
-          {combos.shoes?.length > 0 && <><div className="result-sub-label">Sapatos / Tênis</div><div className="suggestions-grid">{rows(combos.shoes, "Sapato/Tênis")}</div></>}
+          {combos.pants?.length > 0 && <><div className="result-sub-label">{PIECE_TABS.pants} que combinam</div><div className="suggestions-grid">{rows(combos.pants, PIECE_TABS.pants)}</div></>}
+          {combos.shoes?.length > 0 && <><div className="result-sub-label">{PIECE_TABS.shoe}</div><div className="suggestions-grid">{rows(combos.shoes, PIECE_TABS.shoe)}</div></>}
         </>
       )}
       {piece === "pants" && (
         <>
-          {combos.shirts?.length > 0 && <><div className="result-sub-label">Camisas / Camisetas</div><div className="suggestions-grid">{rows(combos.shirts, "Camisa/Camiseta")}</div></>}
-          {combos.shoes?.length > 0 && <><div className="result-sub-label">Sapatos / Tênis</div><div className="suggestions-grid">{rows(combos.shoes, "Sapato/Tênis")}</div></>}
+          {combos.shirts?.length > 0 && <><div className="result-sub-label">{PIECE_TABS.shirt}</div><div className="suggestions-grid">{rows(combos.shirts, PIECE_TABS.shirt)}</div></>}
+          {combos.shoes?.length > 0 && <><div className="result-sub-label">{PIECE_TABS.shoe}</div><div className="suggestions-grid">{rows(combos.shoes, PIECE_TABS.shoe)}</div></>}
         </>
       )}
       {piece === "shoe" && (
         <>
-          {combos.shirts?.length > 0 && <><div className="result-sub-label">Camisas / Camisetas</div><div className="suggestions-grid">{rows(combos.shirts, "Camisa/Camiseta")}</div></>}
-          {combos.pants?.length > 0 && <><div className="result-sub-label">Calças</div><div className="suggestions-grid">{rows(combos.pants, "Calça")}</div></>}
+          {combos.shirts?.length > 0 && <><div className="result-sub-label">{PIECE_TABS.shirt}</div><div className="suggestions-grid">{rows(combos.shirts, PIECE_TABS.shirt)}</div></>}
+          {combos.pants?.length > 0 && <><div className="result-sub-label">{PIECE_TABS.pants}</div><div className="suggestions-grid">{rows(combos.pants, PIECE_TABS.pants)}</div></>}
         </>
       )}
 
@@ -524,9 +838,10 @@ function ResultSection({ piece, selected }) {
 // PATTERNS TAB
 // ─────────────────────────────────────────────
 function PatternsTab() {
+  const cfg = usePalette();
+  const { C, PATTERN_COMBOS, PIECE_TABS, PIECE_ICONS, swapHeading, swapNote } = cfg;
   const [patternPiece, setPatternPiece] = useState("shirt");
   const [selectedPattern, setSelectedPattern] = useState(null);
-  const [swapRendered] = useState(true);
 
   const handleSetPatternPiece = (p) => { setPatternPiece(p); setSelectedPattern(null); };
 
@@ -534,28 +849,28 @@ function PatternsTab() {
     (pt) => (PATTERN_COMBOS[patternPiece]?.[pt.id] || []).length > 0
   );
 
-  const pieceLabel = patternPiece === "shirt" ? "Camisa / Camiseta" : "Calça";
+  const pieceLabel = PIECE_TABS[patternPiece];
   const combos = selectedPattern ? (PATTERN_COMBOS[patternPiece]?.[selectedPattern] || []) : [];
 
-  const roleDisplayMap = { shirt: "Camisa / Camiseta", pants: "Calça", shoe: "Sapato / Tênis" };
+  const roleDisplayMap = PIECE_TABS;
 
   return (
     <div>
       {/* Piece selector */}
       <div className="section-label">Selecione o tipo de peça</div>
       <div className="pattern-piece-selector">
-        {[
-          { id: "shirt", label: "Camisa / Camiseta", Icon: IconShirt },
-          { id: "pants", label: "Calça", Icon: IconPants },
-        ].map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            className={`piece-btn${patternPiece === id ? " active" : ""}`}
-            onClick={() => handleSetPatternPiece(id)}
-          >
-            <Icon /> {label}
-          </button>
-        ))}
+        {["shirt","pants"].map((id) => {
+          const Icon = PIECE_ICONS[id];
+          return (
+            <button
+              key={id}
+              className={`piece-btn${patternPiece === id ? " active" : ""}`}
+              onClick={() => handleSetPatternPiece(id)}
+            >
+              <Icon /> {PIECE_TABS[id]}
+            </button>
+          );
+        })}
       </div>
 
       {/* Pattern type grid */}
@@ -606,7 +921,7 @@ function PatternsTab() {
                     width={80}
                     height={56}
                     scale={0.85}
-                    style={{ borderRadius: 6, border: "1px solid rgba(120,90,50,0.28)", flexShrink: 0 }}
+                    style={{ borderRadius: 6, border: "1px solid var(--warm-border2)", flexShrink: 0 }}
                   />
                   <div>
                     <div style={{ fontSize: 9.5, fontWeight: 500, letterSpacing: 2, textTransform: "uppercase", color: "var(--warm-gold)", marginBottom: 4 }}>
@@ -648,9 +963,9 @@ function PatternsTab() {
       <div className="divider" />
 
       {/* Swap table */}
-      <div className="section-label">Trocas inteligentes — padrões para Warm Autumn</div>
+      <div className="section-label">{swapHeading}</div>
       <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: "1.25rem", fontStyle: "italic" }}>
-        Substitua os padrões frios clássicos por versões quentes que favorecem sua coloração:
+        {swapNote}
       </p>
       <SwapTable />
     </div>
@@ -658,12 +973,13 @@ function PatternsTab() {
 }
 
 function SwapTable() {
+  const { SWAPS } = usePalette();
   return (
     <table className="swap-table">
       <thead>
         <tr>
           <th>Padrão comum</th>
-          <th>Troca para Warm Autumn</th>
+          <th>Troca para a paleta</th>
         </tr>
       </thead>
       <tbody>
@@ -678,7 +994,7 @@ function SwapTable() {
                     width={56}
                     height={36}
                     scale={0.5}
-                    style={{ borderRadius: 5, border: "1px solid rgba(120,90,50,0.28)" }}
+                    style={{ borderRadius: 5, border: "1px solid var(--warm-border2)" }}
                   />
                 </div>
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{s.bad}</span>
@@ -694,7 +1010,7 @@ function SwapTable() {
                     width={56}
                     height={36}
                     scale={0.5}
-                    style={{ borderRadius: 5, border: "1px solid rgba(120,90,50,0.28)" }}
+                    style={{ borderRadius: 5, border: "1px solid var(--warm-border2)" }}
                   />
                 </div>
                 <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-main)" }}>{s.good}</span>
@@ -704,6 +1020,30 @@ function SwapTable() {
         ))}
       </tbody>
     </table>
+  );
+}
+
+// ─────────────────────────────────────────────
+// PALETTE TOGGLE
+// ─────────────────────────────────────────────
+function PaletteToggle({ paletteId, onChange }) {
+  return (
+    <div className="palette-toggle" role="group" aria-label="Trocar paleta de cores">
+      {Object.values(PALETTE_CONFIG).map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          className={`pt-btn${paletteId === p.id ? " active" : ""}`}
+          onClick={() => onChange(p.id)}
+          aria-pressed={paletteId === p.id}
+          aria-label={p.toggleLabel}
+        >
+          <span className="pt-dot" style={{ background: p.accentDot }} />
+          <span className="pt-label-full">{p.toggleLabel}</span>
+          <span className="pt-label-short">{p.toggleShort}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -718,21 +1058,32 @@ const styles = `
   --warm-brown:#5c3d23;--warm-brown-light:#8a6040;--warm-gold:#c08a4a;
   --warm-border:rgba(120,90,50,0.15);--warm-border2:rgba(120,90,50,0.28);
   --text-main:#3a2710;--text-muted:#7a6450;--text-light:#b09a7c;
+  --header-fg:#f5e8d0;--header-fg-soft:rgba(240,220,180,0.7);--header-fg-em:#e8c48a;
+  --header-overlay:radial-gradient(ellipse at 20% 50%,rgba(192,138,74,0.18) 0%,transparent 60%),radial-gradient(ellipse at 80% 30%,rgba(193,110,84,0.15) 0%,transparent 50%);
+  --btn-active-fg:#f5e8d0;--avoid-stroke:rgba(160,30,30,0.75);
   --radius:10px;--radius-lg:16px;
 }
 html{font-size:16px;scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--warm-bg);color:var(--text-main);min-height:100vh}
-header{background:var(--warm-brown);padding:3rem 2rem 2.5rem;text-align:center;position:relative;overflow:hidden}
-header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(192,138,74,0.18) 0%,transparent 60%),radial-gradient(ellipse at 80% 30%,rgba(193,110,84,0.15) 0%,transparent 50%)}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-bg);color:var(--text-main);min-height:100vh;transition:background 0.4s ease,color 0.4s ease}
+header{background:var(--warm-brown);padding:3rem 2rem 2.5rem;text-align:center;position:relative;overflow:hidden;transition:background 0.4s ease}
+header::before{content:'';position:absolute;inset:0;background:var(--header-overlay);transition:background 0.4s ease}
 .header-inner{position:relative;z-index:1}
-.header-eyebrow{font-size:11px;font-weight:400;letter-spacing:5px;text-transform:uppercase;color:rgba(240,220,180,0.7);margin-bottom:14px}
-header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,7vw,5rem);font-weight:300;color:#f5e8d0;letter-spacing:3px;line-height:1;margin-bottom:14px}
-header h1 em{font-style:italic;color:#e8c48a}
-.header-sub{font-size:13px;color:rgba(240,215,175,0.65);letter-spacing:1px}
-.tab-bar{display:flex;background:var(--warm-brown);border-top:1px solid rgba(255,255,255,0.08)}
-.tab-btn{flex:1;padding:12px 8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,215,175,0.5);background:none;border:none;cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent}
-.tab-btn:hover{color:rgba(240,215,175,0.85)}
-.tab-btn.active{color:#e8c48a;border-bottom-color:#e8c48a}
+.header-eyebrow{font-size:11px;font-weight:400;letter-spacing:5px;text-transform:uppercase;color:var(--header-fg-soft);margin-bottom:14px}
+header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,7vw,5rem);font-weight:300;color:var(--header-fg);letter-spacing:3px;line-height:1;margin-bottom:14px}
+header h1 em{font-style:italic;color:var(--header-fg-em)}
+.header-sub{font-size:13px;color:var(--header-fg-soft);letter-spacing:1px}
+.palette-toggle{position:absolute;top:16px;right:16px;z-index:3;display:flex;background:rgba(0,0,0,0.20);border:1px solid rgba(255,255,255,0.18);border-radius:50px;padding:3px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pt-btn{padding:7px 14px;border:none;background:transparent;border-radius:50px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--header-fg-soft);cursor:pointer;display:flex;align-items:center;gap:7px;transition:background 0.25s ease,color 0.25s ease,transform 0.15s ease;line-height:1}
+.pt-btn:hover{color:var(--header-fg)}
+.pt-btn.active{background:var(--warm-gold);color:#1a1208}
+.pt-btn.active:hover{color:#1a1208}
+.pt-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.4)}
+.pt-btn.active .pt-dot{border-color:rgba(0,0,0,0.15)}
+.pt-label-short{display:none}
+.tab-bar{display:flex;background:var(--warm-brown);border-top:1px solid rgba(255,255,255,0.08);transition:background 0.4s ease}
+.tab-btn{flex:1;padding:12px 8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--header-fg-soft);background:none;border:none;cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent}
+.tab-btn:hover{color:var(--header-fg)}
+.tab-btn.active{color:var(--header-fg-em);border-bottom-color:var(--header-fg-em)}
 .main{max-width:920px;margin:0 auto;padding:2.5rem 1.5rem 4rem}
 .section-label{font-size:10px;font-weight:500;letter-spacing:4px;text-transform:uppercase;color:var(--warm-gold);margin-bottom:1rem}
 .piece-selector{display:flex;gap:10px;margin-bottom:2rem;flex-wrap:wrap}
@@ -740,7 +1091,7 @@ header h1 em{font-style:italic;color:#e8c48a}
 .piece-btn svg{flex-shrink:0;opacity:0.6;transition:opacity 0.2s}
 .piece-btn:hover{border-color:var(--warm-gold);color:var(--warm-brown)}
 .piece-btn:hover svg{opacity:1}
-.piece-btn.active{background:var(--warm-brown);border-color:var(--warm-brown);color:#f5e8d0}
+.piece-btn.active{background:var(--warm-brown);border-color:var(--warm-brown);color:var(--btn-active-fg)}
 .piece-btn.active svg{opacity:1;filter:brightness(3)}
 .palette-section{margin-bottom:2rem}
 .palette-grid{display:flex;flex-wrap:wrap;gap:8px}
@@ -783,7 +1134,7 @@ header h1 em{font-style:italic;color:#e8c48a}
 .avoid-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:1.5rem}
 .avoid-chip{width:82px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--warm-border);background:var(--warm-card)}
 .avoid-swatch{height:46px;position:relative}
-.avoid-swatch::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 42%,rgba(160,30,30,0.75) 43%,rgba(160,30,30,0.75) 57%,transparent 58%)}
+.avoid-swatch::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 42%,var(--avoid-stroke) 43%,var(--avoid-stroke) 57%,transparent 58%)}
 .avoid-label{padding:4px 6px 5px;font-size:10px;color:var(--text-muted);background:var(--warm-card);text-align:center;border-top:1px solid var(--warm-border)}
 .pattern-piece-selector{display:flex;gap:10px;margin-bottom:2rem;flex-wrap:wrap}
 .pattern-types-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:2rem}
@@ -811,26 +1162,59 @@ header h1 em{font-style:italic;color:#e8c48a}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeUp 0.3s ease forwards}
 footer{text-align:center;padding:2rem;font-size:11px;color:var(--text-light);letter-spacing:1px;border-top:1px solid var(--warm-border2)}
+@media(max-width:760px){
+  .pt-label-full{display:none}
+  .pt-label-short{display:inline}
+  .pt-btn{padding:6px 10px;font-size:10px;letter-spacing:0.5px}
+}
 @media(max-width:600px){
-  header{padding:2rem 1.25rem 1.75rem}
+  header{padding:3.25rem 1.25rem 1.75rem}
+  .palette-toggle{top:10px;right:10px;padding:2px}
+  .pt-btn{padding:5px 8px;gap:0;font-size:0}
+  .pt-btn .pt-dot{width:14px;height:14px}
   .main{padding:1.75rem 1rem 3rem}
   .color-chip{width:76px}
   .avoid-chip{width:72px}
   .pattern-type-chip{width:90px}
 }
+@media(max-width:420px){
+  header{padding-top:3.5rem}
+  header h1{font-size:clamp(2.4rem,11vw,4rem)}
+}
 `;
 
 export default function WarmAutumn() {
+  const [paletteId, setPaletteId] = useState(() => {
+    try {
+      const saved = typeof window !== "undefined" ? window.localStorage.getItem("palette") : null;
+      return saved && PALETTE_CONFIG[saved] ? saved : "warm-autumn";
+    } catch {
+      return "warm-autumn";
+    }
+  });
   const [activeTab, setActiveTab] = useState("colors");
 
+  useEffect(() => {
+    try { window.localStorage.setItem("palette", paletteId); } catch { /* ignore */ }
+  }, [paletteId]);
+
+  useEffect(() => {
+    const vars = PALETTE_CONFIG[paletteId].THEME_VARS;
+    const root = document.documentElement;
+    for (const k in vars) root.style.setProperty(k, vars[k]);
+  }, [paletteId]);
+
+  const cfg = PALETTE_CONFIG[paletteId];
+
   return (
-    <>
+    <PaletteContext.Provider value={cfg}>
       <style>{styles}</style>
       <header>
+        <PaletteToggle paletteId={paletteId} onChange={setPaletteId} />
         <div className="header-inner">
-          <div className="header-eyebrow">Coloração Pessoal · Guia de Estilo</div>
-          <h1>Warm <em>Autumn</em></h1>
-          <div className="header-sub">Paleta interativa para montagem de looks</div>
+          <div className="header-eyebrow">{cfg.eyebrow}</div>
+          <h1>{cfg.title.prefix} <em>{cfg.title.emph}</em></h1>
+          <div className="header-sub">{cfg.subtitle}</div>
         </div>
       </header>
 
@@ -850,10 +1234,10 @@ export default function WarmAutumn() {
       </div>
 
       <div className="main">
-        {activeTab === "colors" ? <ColorsTab /> : <PatternsTab />}
+        {activeTab === "colors" ? <ColorsTab key={paletteId + "-colors"} /> : <PatternsTab key={paletteId + "-patterns"} />}
       </div>
 
-      <footer>Warm Autumn · Guia de Coloração Pessoal · Paleta baseada em Pantone TCX</footer>
-    </>
+      <footer>{cfg.footer}</footer>
+    </PaletteContext.Provider>
   );
 }
